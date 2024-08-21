@@ -1,0 +1,144 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "denoiset"
+requires-python = ">=3.9"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License",
+]
+#dynamic = ["version"]
+version = "0.1.0"
+dependencies = [
+    "torch",
+    "pydantic",
+    "numpy==1.26.4",
+    "pandas",
+    "scipy",
+    "scikit-image",
+    "mrcfile==1.5.0",
+    "typing",
+    "matplotlib",
+    "argparse",
+    "tqdm",
+    "ipython",
+    "pytest",
+]
+authors = [
+  {name = "Ariana Peck", email = "ariana.peck@czii.org"},
+]
+description = "An implementation of Noise2Noise for cryoET data."
+readme = "README.md"
+license = {file = "LICENSE"}
+keywords = ["cryoet", "cryo-et", "tomography"]
+
+[project.urls]
+Repository = "https://github.com/denoiset/denoiset.git"
+Issues = "https://github.com/denoiset/denoiset/issues"
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+]
+dev = [
+    "black",
+    "ipython",
+    "pre-commit",
+    "ruff",
+    "notebook",
+]
+
+#[project.scripts]
+
+#[tool.hatch.version]
+#source = "denoiset/__init__.py"
+#fallback-version = "0.3.0"
+
+#[tool.black]
+#line-length = 120
+#target_version = ['py311']
+
+[tool.ruff]
+select = [
+    "E", "W",  # pycodestyle
+    "F",       # pyflakes
+    "B",       # bugbear
+    "I",       # isort
+    "N",       # pep8-naming
+    "ASYNC",   # async
+    "COM",     # commas
+    "C4",      # comprehensions
+    "DTZ",     # datetimez
+    "ISC",     # implicit-str-concat
+    "G",       # logging-format
+    "T20",     # print
+    "SIM",     # simplify
+]
+ignore = [
+    "W293",   # blank line contains whitespace
+    "B008",   # Do not perform calls in argument defaults
+    "B905",   # `zip()` without an explicit `strict=` parameter
+    "N802",   # Function name should be lowercase
+    "N805",   # First argument of a method should be named `self`
+    "N806",   # Variable in function should be lowercase
+    "N999",   # Invalid module name
+    "E501",   # line too long
+    "C408",   # rewrite empty built-ins as literals
+    "T201",   # print statements.
+    "DTZ007", # Datetime objects without timezones.
+    "DTZ005", # More datetimes without timezones.
+    "SIM102", # Nested if statements
+    "F821", # Undefined name
+]
+line-length = 120
+target-version = "py311"
+exclude = [
+    "mkdocs.yml",
+]
+
+[tool.ruff.isort]
+known-first-party =["common"]
+
+[tool.ruff.flake8-quotes]
+docstring-quotes = "double"
+
+[tool.mypy]
+show_error_codes = true
+ignore_missing_imports = true
+warn_unreachable = true
+strict = true
+plugins = [
+  "pydantic.mypy"
+]
+
+[tool.hatch.envs.test]
+dependencies = [
+  "pytest", "pooch",
+]
+
+[tool.hatch.envs.test.scripts]
+test = "pytest {args:tests}"
+
+[tool.hatch.envs.test_extended]
+dependencies = [
+  "pytest", "pooch",
+]
+
+[tool.hatch.envs.test_extended.scripts]
+test = "pytest {args:tests}"
+
+# https://docs.pytest.org/en/latest/reference/customize.html
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = ["tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "@overload",
+    "except ImportError",
+    "pass",
+]
