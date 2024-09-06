@@ -1,5 +1,7 @@
+import os
 from argparse import ArgumentParser
 import denoiset.inference as inference
+from denoiset.settings import ProcessingConfigPredict3d
 
 
 def parse_args():
@@ -84,11 +86,35 @@ def parse_args():
     return parser.parse_args()
 
 
+def store_parameters(config):
+    """
+    Store command line arguments in a json file.
+    """
+    d_config = vars(config)
+
+    reconfig = {}
+    reconfig["software"] = {"name": "denoiset", "version": "0.1.0"}
+    reconfig["input"] = {k: d_config[k] for k in ["in_dir", "filenames", "model"]}
+    reconfig["output"] = {k: d_config[k] for k in ["out_dir"]}
+
+    used_keys = [list(reconfig[key].keys()) for key in reconfig]
+    used_keys = [p for param in used_keys for p in param]
+    param_keys = [key for key in d_config if key not in used_keys]
+    reconfig["parameters"] = {k: d_config[k] for k in param_keys}
+
+    reconfig = ProcessingConfigPredict3d(**reconfig)
+
+    os.makedirs(config.out_dir, exist_ok=True)
+    with open(os.path.join(config.out_dir, "predict3d.json"), "w") as f:
+        f.write(reconfig.model_dump_json(indent=4))
+
+
 def main():
     
     config = parse_args()
     if not config.live:
         config.t_interval = config.t_exit = 0
+    store_parameters(config)
         
     n2n = inference.Denoiser3d(
         config.model,
