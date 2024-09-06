@@ -4,20 +4,6 @@ import torch.nn as nn
 import denoiset.blocks as blocks
 
 
-def save_model(model: nn.Module, fname:str) -> None:
-    """
-    Save a model's state dictionary.
-    
-    Parameters
-    ----------
-    model: nn.Module object 
-    fname: filename for saving model
-    """
-    if os.path.dirname(fname) != "":
-        os.makedirs(os.path.dirname(fname), exist_ok=True)
-    torch.save(model.state_dict(), fname)
-    
-
 class UNet3d(nn.Module):
     """
     3D UNet architecture similar to Topaz's architecture as described 
@@ -70,3 +56,35 @@ class UNet3d(nn.Module):
         y = self.decoding1(y, x)
         
         return y
+
+
+def load_model_3d(filename: str) -> UNet3d:
+    """
+    Load saved weights for a pretrained UNet3d model.
+
+    Parameters
+    ----------
+    filename: path to saved model file
+
+    Returns
+    -------
+    unet_model: GPU-loaded instance of a pretrained UNet3d
+    """
+    unet_model = UNet3d()
+    unet_model.load_state_dict(torch.load(filename))
+    unet_model = unet_model.cuda()
+    return unet_model
+
+
+def save_model(model: nn.Module, filename: str) -> None:
+    """
+    Save a model's state dictionary.
+    
+    Parameters
+    ----------
+    model: nn.Module object 
+    filename: filename for saving model
+    """
+    if os.path.dirname(filename) != "":
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+    torch.save(model.state_dict(), filename)

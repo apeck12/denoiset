@@ -1,7 +1,11 @@
 import numpy as np
 import itertools
+import os
+import time
 import torch
+import denoiset.dataio as dataio
 from denoiset.model import UNet3d
+from denoiset.model import load_model_3d
 
 
 def get_bounds_one_axis(dim: int, length:int, padding:int) -> list:
@@ -125,3 +129,98 @@ def denoise_volume(
         
     volume_d = sigma * volume_d + mu
     return volume_d.cpu().numpy()
+
+
+class Denoiser3d:
+    
+    def __init__(
+        self,
+        fn_model: str,
+        out_dir: str,
+        length: int,
+        padding: int,
+    ) -> None:
+        """
+        Set up class to denoise volumes.
+        
+        Parameters
+        ----------
+        fn_model: path to pretrained model
+        out_dir: output directory
+        length: subvolume side length before padding
+        padding: number of pixels for padding/overlap
+        """
+        self.model = load_model_3d(fn_model)
+        self.out_dir = out_dir
+        os.makedirs(self.out_dir, exist_ok=True)
+        self.length = length
+        self.padding = padding
+        self.processed = []
+        self.apix = None
+        
+    def denoise(
+        self,
+        fnames: list,
+    ) -> None:
+        """
+        Denoise the listed files.
+        
+        Parameters
+        ----------
+        fnames: files (full path) to process
+        """
+        for i,fn in enumerate(fnames):
+            if self.apix == None:
+                self.apix = dataio.get_voxel_size(fn)
+            
+            volume = dataio.load_mrc(fn).copy()
+            volume = denoise_volume(
+                volume, self.model, self.length, self.padding,
+            )
+            
+            fn_out = os.path.join(self.out_dir, fn.split("/")[-1])
+            dataio.save_mrc(
+                volume.astype(np.float32), fn_out, self.apix,
+            )
+            self.processed.append(fn)
+        
+    def process(
+        self,
+        in_dir: str,
+        pattern: str="*Vol.mrc",
+        exclude_tags: list=["ODD","EVN"],
+        filenames: str=None,
+        t_interval: float=300,
+        t_exit: float=1800,
+    ) -> None:
+        """ 
+        Denoise available tomograms, potentially in live mode.
+        
+        Parameters
+        ----------
+        in_dir: input directory
+        pattern: glob-expandable pattern contained by file basenames
+        exclude_tags: substring(s) for file exclusion
+        t_interval: seconds to wait before checking for new files
+        t_exit: seconds to wait after last finding new files before exiting
+        """
+        start_time = time.time()
+        while True:
+            if filenames is None:
+                fnames = dataio.expand_filelist(
+                    in_dir, pattern, exclude_tags,
+                )
+                fnames = [fn for fn in fnames if fn not in self.processed]
+            else:
+                fnames = np.loadtxt(filenames, dtype=str, ndmin=1)
+                fnames = [os.path.join(in_dir, f"{fn}_Vol.mrc") for fn in fnames]
+            print(time.strftime("%X %x %Z"), f": Found {len(fnames)} new files to process")
+            
+            if len(fnames) > 0:
+                self.denoise(fnames)
+                start_time = time.time()
+                
+            time.sleep(t_interval)
+            t_elapsed = time.time() - start_time
+            if t_elapsed > t_exit:
+                break

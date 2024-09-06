@@ -50,7 +50,8 @@ dev = [
     "notebook",
 ]
 
-#[project.scripts]
+[project.scripts]
+predict3d = "denoiset.cli.predict3d:main"
 
 #[tool.hatch.version]
 #source = "denoiset/__init__.py"
