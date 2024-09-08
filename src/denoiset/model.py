@@ -58,6 +58,26 @@ class UNet3d(nn.Module):
         return y
 
 
+def generate_model_3d(seed_value: int=None) -> UNet3d:
+    """
+    Generate a new UNet3d model, optionally with a fixed
+    random seed for setting initial weights
+
+    Parameters
+    ----------
+    seed_value: random seed
+
+    Returns
+    -------
+    unet_model: GPU-loaded instance of UNet3d
+    """
+    if seed_value is not None:
+        torch.manual_seed(seed_value)
+    unet_model = UNet3d()
+    unet_model = unet_model.cuda()
+    return unet_model
+
+    
 def load_model_3d(filename: str) -> UNet3d:
     """
     Load saved weights for a pretrained UNet3d model.
