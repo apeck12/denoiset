@@ -50,7 +50,7 @@ class TestPairedTomograms:
         """ Make a PairedTomogram class. """
         length = 4
         n_extract = 5
-        d_fn = dataio.get_split_filenames(self.test_dir, "*ODD_Vol.mrc", f_val=0.1)
+        d_fn = dataio.get_split_filenames(self.test_dir, 0.1, pattern="*ODD_Vol.mrc")
         self.paired_data = dataset.PairedTomograms(
             d_fn['train1'], 
             d_fn['train2'], 

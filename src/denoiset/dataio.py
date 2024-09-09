@@ -93,21 +93,26 @@ def expand_filelist(
 
 
 def get_split_filenames(
-    in_dir: str, 
-    pattern: str, 
+    in_path: str, 
     f_val: float,
+    pattern: str="*ODD_Vol.mrc",
+    extension: str="_ODD_Vol.mrc",
     exclude_tags: list=[], 
     rng: np.random._generator.Generator=None,
 ) -> dict:
     """
-    Retrieve all available pairs of files and split between train
-    and test sets.
+    Retrieve all available file pairs and split into train and test. 
+    Files are supplied via the in_path argument as a 1) directory of
+    mrc files, 2) list of *ODD_Vol.mrc file paths, or 3) text file in
+    which even line specifies the path to a tomogram -- either the base
+    name or omitting the ODD_Vol.mrc extension. 
     
     Parameters
     ----------
-    in_dir: base directory 
+    in_path: base directory or text file listing files
+    f_val: fraction of files to set aside for test set
     pattern: glob-expandable string pattern
-    fval: fraction of files to set aside for test set
+    extension: extension to add to each listed file
     exclude_tags: list of tags to exclude
     rng: random generator object if seed is fixed
     
@@ -117,10 +122,21 @@ def get_split_filenames(
     """
     if rng is None:
         rng = np.random.default_rng()
+    
+    if isinstance(in_path, list):
+        filenames1 = in_path
+    elif os.path.isdir(in_path):
+        filenames1 = expand_filelist(in_path, pattern)
+    elif os.path.isfile and os.path.splitext(in_path)[-1] != '.mrc':
+        filenames1 = np.loadtxt(in_path, dtype=str)
+        if not all([os.path.splitext(fn)[-1]=='.mrc' for fn in filenames1]):
+            filenames1 = [f"{fn}{extension}" for fn in filenames1]
+    else:
+        raise ValueError("in_path argument not recognized")
         
-    filenames1 = expand_filelist(in_dir, pattern)
     if len(filenames1) == 0:
         raise IOError("No input ODD files found")
+    assert all([os.path.splitext(fn)[-1]=='.mrc' and 'ODD' in fn for fn in filenames1])
 
     filenames2 = [fn1.replace("ODD", "EVN") for fn1 in filenames1]
     keep_idx = [os.path.exists(fn2) for fn2 in filenames2]

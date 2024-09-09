@@ -27,7 +27,7 @@ class TestFileSplits:
     def setup_class(self):
         cwd = os.path.dirname(os.path.realpath(__file__))
         self.fnames = np.loadtxt(os.path.join(cwd, "input_names.txt"), dtype=str)
-        self.test_dir = "test_datio"
+        self.test_dir = "test_dataio"
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir)
         os.makedirs(self.test_dir, exist_ok=True)
@@ -59,7 +59,7 @@ class TestFileSplits:
         """ Various tests of the get_split_filenames function. """
         # verify expected number of files for validation fraction
         f_val = np.random.uniform(low=0, high=0.4)
-        file_split = dataio.get_split_filenames(self.test_dir, "*ODD_Vol.mrc", f_val=f_val)
+        file_split = dataio.get_split_filenames(self.test_dir, f_val, pattern="*ODD_Vol.mrc")
         assert len(file_split['test1']) == len(file_split['test2']) == int(np.around(f_val * 10))
 
         # verify no overlap between train and test; train1/train2 and test1/test2 match
@@ -71,14 +71,14 @@ class TestFileSplits:
         # check that random seed works as expected
         random_seed = np.random.randint(0, high=5)
         rng = np.random.default_rng(random_seed)
-        file_split1 = dataio.get_split_filenames(self.test_dir, "*ODD_Vol.mrc", f_val=f_val, rng=rng)
+        file_split1 = dataio.get_split_filenames(self.test_dir, f_val, pattern="*ODD_Vol.mrc", rng=rng)
         rng = np.random.default_rng(random_seed)
-        file_split2 = dataio.get_split_filenames(self.test_dir, "*ODD_Vol.mrc", f_val=f_val, rng=rng)
+        file_split2 = dataio.get_split_filenames(self.test_dir, f_val, pattern="*ODD_Vol.mrc", rng=rng)
         assert file_split1['train1'] == file_split2['train1']
         assert file_split1['test1'] == file_split2['test1']
         random_seed = np.random.randint(6, high=10)
         rng = np.random.default_rng(random_seed)
-        file_split2 = dataio.get_split_filenames(self.test_dir, "*ODD_Vol.mrc", f_val=f_val, rng=rng)
+        file_split2 = dataio.get_split_filenames(self.test_dir, f_val, pattern="*ODD_Vol.mrc", rng=rng)
         assert file_split1['train1'] != file_split
         
         shutil.rmtree(self.test_dir)
