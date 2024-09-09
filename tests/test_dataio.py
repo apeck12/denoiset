@@ -60,13 +60,13 @@ class TestFileSplits:
         # verify expected number of files for validation fraction
         f_val = np.random.uniform(low=0, high=0.4)
         file_split = dataio.get_split_filenames(self.test_dir, f_val, pattern="*ODD_Vol.mrc")
-        assert len(file_split['test1']) == len(file_split['test2']) == int(np.around(f_val * 10))
+        assert len(file_split['valid1']) == len(file_split['valid2']) == int(np.around(f_val * 10))
 
         # verify no overlap between train and test; train1/train2 and test1/test2 match
-        assert [fn.replace('ODD', 'EVN') for fn in file_split['test1']] == file_split['test2']
+        assert [fn.replace('ODD', 'EVN') for fn in file_split['valid1']] == file_split['valid2']
         assert [fn.replace('ODD', 'EVN') for fn in file_split['train1']] == file_split['train2']
-        assert all([fn not in file_split['test1'] for fn in file_split['train2']])
-        assert all([fn not in file_split['test2'] for fn in file_split['train2']])
+        assert all([fn not in file_split['valid1'] for fn in file_split['train2']])
+        assert all([fn not in file_split['valid2'] for fn in file_split['train2']])
 
         # check that random seed works as expected
         random_seed = np.random.randint(0, high=5)
@@ -75,7 +75,7 @@ class TestFileSplits:
         rng = np.random.default_rng(random_seed)
         file_split2 = dataio.get_split_filenames(self.test_dir, f_val, pattern="*ODD_Vol.mrc", rng=rng)
         assert file_split1['train1'] == file_split2['train1']
-        assert file_split1['test1'] == file_split2['test1']
+        assert file_split1['valid1'] == file_split2['valid1']
         random_seed = np.random.randint(6, high=10)
         rng = np.random.default_rng(random_seed)
         file_split2 = dataio.get_split_filenames(self.test_dir, f_val, pattern="*ODD_Vol.mrc", rng=rng)

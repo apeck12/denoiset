@@ -101,7 +101,7 @@ def get_split_filenames(
     rng: np.random._generator.Generator=None,
 ) -> dict:
     """
-    Retrieve all available file pairs and split into train and test. 
+    Retrieve available file pairs and split into train and validation. 
     Files are supplied via the in_path argument as a 1) directory of
     mrc files, 2) list of *ODD_Vol.mrc file paths, or 3) text file in
     which even line specifies the path to a tomogram -- either the base
@@ -110,7 +110,7 @@ def get_split_filenames(
     Parameters
     ----------
     in_path: base directory or text file listing files
-    f_val: fraction of files to set aside for test set
+    f_val: fraction to set aside for validation set
     pattern: glob-expandable string pattern
     extension: extension to add to each listed file
     exclude_tags: list of tags to exclude
@@ -152,7 +152,7 @@ def get_split_filenames(
     file_split = {}
     file_split['train1'] = [fn for i,fn in enumerate(filenames1) if i not in rand_idx]
     file_split['train2'] = [fn for i,fn in enumerate(filenames2) if i not in rand_idx]
-    file_split['test1'] = list(np.take(filenames1, rand_idx))
-    file_split['test2'] = list(np.take(filenames2, rand_idx))
+    file_split['valid1'] = list(np.take(filenames1, rand_idx))
+    file_split['valid2'] = list(np.take(filenames2, rand_idx))
 
     return file_split
