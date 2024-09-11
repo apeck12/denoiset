@@ -23,8 +23,8 @@ def load_mrc(filename: str) -> np.ndarray:
 def save_mrc(
     data: np.ndarray,
     filename: str,
-    overwrite: bool = True,
     apix: float = None,
+    overwrite: bool = True,
 ):
     """
     Save a numpy array to mrc format.
@@ -33,8 +33,8 @@ def save_mrc(
     ----------
     data: np.ndarray, image or volume
     filename: str, save path
-    overwrite: bool, overwrite filename if already exists
     apix: float, pixel size in Angstrom
+    overwrite: bool, overwrite filename if already exists
     """
     if data.dtype != np.dtype("float32"):
         data = data.astype(np.float32)
