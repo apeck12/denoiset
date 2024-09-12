@@ -25,7 +25,7 @@ class UNet3d(nn.Module):
         self.decoding2 = blocks.DecodingBlock3d(3*n_filters, 2*n_filters, slope=slope)
         self.decoding1 = blocks.OutBlock3d(2*n_filters+1, int(4./3*n_filters), 1, slope=slope)
 
-        self._init_weights()
+        #self._init_weights()
 
     def _init_weights(self) -> int:
         """ Initializes weights according to the Kaiming approach. """

@@ -127,8 +127,9 @@ class PairedTomograms(PairedData):
         """
         threshold = 5250000000 # approx number of voxels
         self.n_load = int(threshold / (self.n_extract * self.length**3))
-        self.n_load = min(self.n_extract, len(self.filenames1))
-    
+        self.n_load = min(self.n_load, len(self.filenames1))
+        print(f"Number of tomograms to load at once: {self.n_load}")
+        
     def get_paired_subvolumes(
         self, 
         volume1: np.ndarray, 
@@ -190,6 +191,7 @@ class PairedTomograms(PairedData):
             self.pairs1, self.pairs2 = None, None
             for n in range(self.n_load):
                 if index_fn + n < len(self.filenames1):
+                    print(f"Loading {self.filenames1[index_fn+n]} and {self.filenames2[index_fn+n]}")
                     volume1 = dataio.load_mrc(self.filenames1[index_fn+n])
                     volume2 = dataio.load_mrc(self.filenames2[index_fn+n])
                     subvolumes1, subvolumes2 = self.get_paired_subvolumes(

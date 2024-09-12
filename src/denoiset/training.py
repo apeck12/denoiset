@@ -1,0 +1,186 @@
+import numpy as np
+import os
+import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader
+
+import denoiset.dataio as dataio
+import denoiset.dataset as dataset
+from denoiset.model import load_model_3d, generate_model_3d, save_model
+
+class Trainer3d:
+    
+    def __init__(
+        self,
+        in_path: str,
+        out_path: str,
+        fn_model: str=None,
+        seed: int=None,
+        optimizer: str="adagrad",
+        learning_rate: float=0.001,
+        batch_size: int=8,
+        val_fraction: float=0.1,
+        pattern: str="*ODD_Vol.mrc",
+        extension: str="_ODD_Vol.mrc",
+        length: int=96,
+        n_extract: int=100,
+    ) -> None:
+        """
+        Set up class for Noise2Noise training on tomography data. 
+        
+        Parameters
+        ----------
+        in_path: directory or text file of training tomograms
+        out_path: output directory
+        fn_model: path to a pretrained model
+        seed: fixed random seed value
+        optimizer: optimizer type
+        learning_rate: optimizer learning rate
+        batch_size: number of paired subvolumes per batch  
+        val_fraction: fraction of tomograms used for validation
+        pattern: glob-expandable pattern for ODD tomograms
+        extension: suffix for ODD tomograms
+        length: side length for subvolume extraction
+        n_extract: number of subvolumes to extract per tomogram
+        
+        """
+        self.rng = np.random.default_rng(seed)
+        self.set_model(fn_model, seed)
+        self.loss_fn = nn.MSELoss()
+        self.set_optimizer(optimizer, learning_rate)
+        self.batch_size = batch_size
+        self.set_dataloaders(
+            in_path, 
+            val_fraction, 
+            pattern, 
+            extension, 
+            length,
+            n_extract,
+        )
+        self.out_path = out_path
+        
+    def set_model(
+        self,
+        fn_model: str=None,
+        seed: int=None,
+    ) -> None:
+        """
+        Set up UNet3d model, optionally from a pretrained model
+        or with weights initialized using a fixed random seed
+        if fn_model or seed_value is supplied, respectively.
+        """
+        if fn_model is not None:
+            self.model = load_model_3d(fn_model)
+        else:
+            self.model = generate_model_3d(seed)
+        
+    def set_optimizer(
+        self,
+        optimizer: str,
+        learning_rate: float,
+    ) -> None:
+        """
+        Set up optimizer. 
+        """
+        if optimizer == 'adagrad':
+            self.optimizer = torch.optim.Adagrad(
+                self.model.parameters(), lr=learning_rate,
+            )
+        elif optimizer == "adamw":
+            self.optimizer =  torch.optim.AdamW(
+                self.model.parameters(), lr=learning_rate,
+            )
+        else:
+            raise NotImplementedError
+    
+    def set_dataloaders(
+        self,
+        in_path: str,
+        val_fraction: float,
+        pattern: str, 
+        extension: str, 
+        length: int=96,
+        n_extract: int=100,
+    ) -> None:
+        """
+        Generate Dataloaders for training and validation sets.
+        """
+        file_split = dataio.get_split_filenames(
+            in_path,
+            val_fraction,
+            pattern=pattern,
+            extension=extension,
+            exclude_tags=[],
+            rng=self.rng,
+        )
+
+        dataset_train = dataset.PairedTomograms(
+            file_split['train1'], file_split['train2'], length, n_extract,
+        )
+        dataset_valid = dataset.PairedTomograms(
+            file_split['valid1'], file_split['valid2'], length, n_extract,
+        )
+        self.dataloader_train = DataLoader(
+            dataset_train, batch_size=self.batch_size, shuffle=False, num_workers=0,
+        )
+        self.dataloader_valid = DataLoader(
+            dataset_valid, batch_size=self.batch_size, shuffle=False, num_workers=0,
+        )
+
+    def evaluate(self, epoch_index):
+        """ Evaluate model on validation data. """
+        running_loss = 0
+        with torch.no_grad():
+            for i,(source,target) in enumerate(self.dataloader_valid):
+                source = source.cuda()
+                target = target.cuda()
+                source_out = self.model(source)
+                running_loss += self.loss_fn(source_out, target)
+                
+        return running_loss/(i+1)
+
+    def train_epoch(self, epoch_index):
+        """ 
+        Train model for one epoch, tracking the loss.
+        """
+        running_loss = 0
+        last_loss = 0
+
+        for i,(source,target) in enumerate(self.dataloader_train):
+            # load subvolume pair onto device
+            source = source.cuda()
+            target = target.cuda()
+
+            # apply model to one image, calculate loss w.r.t. its pair
+            source_out = self.model(source)
+            loss = self.loss_fn(source_out, target)
+
+            # perform a backward pass, update weights, zero gradients
+            loss.backward()
+            self.optimizer.step()
+            self.optimizer.zero_grad()
+            
+            # gather stats and report
+            running_loss += loss.item()
+            if i % self.batch_size == self.batch_size-1:
+                last_loss = running_loss / self.batch_size # loss per batch
+                print('  batch {} loss: {}'.format(i + 1, last_loss))
+                running_loss = 0
+
+        return last_loss
+
+    def train(self, n_epochs: int=20, save_each_epoch: bool=True):
+        """ 
+        Train model, evaluating on validation data after each epoch. 
+        """
+        os.makedirs(self.out_path, exist_ok=True)
+        for epoch in range(n_epochs):
+            print('EPOCH {}:'.format(epoch + 1))
+            self.model.train(True)
+            avg_loss = self.train_epoch(epoch)
+            self.model.eval()
+            avg_vloss = self.evaluate(epoch)
+            print('LOSS train {} valid {}'.format(avg_loss, avg_vloss))
+
+            if save_each_epoch:
+                save_model(self.model, os.path.join(self.out_path, f"epoch{epoch+1}.pth"))
