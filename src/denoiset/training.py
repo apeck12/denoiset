@@ -141,7 +141,7 @@ class Trainer3d:
                 self.dataloader_train.dataset.filenames1,
                 self.dataloader_valid.dataset.filenames2,
             ))
-            filenames = np.random.choice(
+            filenames = self.rng.choice(
                 filenames, n_denoise, replace=False,
             )
             filenames = [fn.replace('ODD_', '') for fn in filenames]
