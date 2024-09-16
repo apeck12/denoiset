@@ -180,7 +180,7 @@ class Denoiser3d:
             
             fn_out = os.path.join(self.out_dir, fn.split("/")[-1])
             dataio.save_mrc(
-                volume.astype(np.float32), fn_out, self.apix,
+                volume.astype(np.float32), fn_out, apix=self.apix,
             )
             self.processed.append(fn)
         

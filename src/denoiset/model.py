@@ -25,7 +25,7 @@ class UNet3d(nn.Module):
         self.decoding2 = blocks.DecodingBlock3d(3*n_filters, 2*n_filters, slope=slope)
         self.decoding1 = blocks.OutBlock3d(2*n_filters+1, int(4./3*n_filters), 1, slope=slope)
 
-        self._init_weights()
+        #self._init_weights()
 
     def _init_weights(self) -> int:
         """ Initializes weights according to the Kaiming approach. """
@@ -58,6 +58,26 @@ class UNet3d(nn.Module):
         return y
 
 
+def generate_model_3d(seed_value: int=None) -> UNet3d:
+    """
+    Generate a new UNet3d model, optionally with a fixed
+    random seed for setting initial weights
+
+    Parameters
+    ----------
+    seed_value: random seed
+
+    Returns
+    -------
+    unet_model: GPU-loaded instance of UNet3d
+    """
+    if seed_value is not None:
+        torch.manual_seed(seed_value)
+    unet_model = UNet3d()
+    unet_model = unet_model.cuda()
+    return unet_model
+
+    
 def load_model_3d(filename: str) -> UNet3d:
     """
     Load saved weights for a pretrained UNet3d model.
