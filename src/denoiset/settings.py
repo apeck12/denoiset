@@ -6,6 +6,10 @@ class ProcessingSoftware(BaseModel):
     name: str
     version: str
 
+
+class ProcessingOutput(BaseModel):
+    out_dir: str
+    
     
 class ProcessingInputPredict3d(BaseModel):
     model: str
@@ -13,10 +17,6 @@ class ProcessingInputPredict3d(BaseModel):
     filenames: Optional[str]
 
     
-class ProcessingOutput(BaseModel):
-    out_dir: str
-
-
 class ProcessingParametersPredict3d(BaseModel):
     pattern: str
     exclude_tags: List[str]
@@ -32,3 +32,31 @@ class ProcessingConfigPredict3d(BaseModel):
     input: ProcessingInputPredict3d
     output: ProcessingOutput
     parameters: ProcessingParametersPredict3d
+
+
+class ProcessingInputTrain3d(BaseModel):
+    in_path: str
+    model: Optional[str]
+    
+
+class ProcessingParametersTrain3d(BaseModel):
+    seed: Optional[int]
+    optimizer: str
+    learning_rate: float
+    batch_size: int
+    val_fraction: float
+    pattern: str
+    extension: str
+    n_epochs: int
+    n_denoise: int
+    length: int
+    live: bool
+    t_interval: float
+    t_exit: float
+
+
+class ProcessingConfigTrain3d(BaseModel):
+    software: ProcessingSoftware
+    input: ProcessingInputTrain3d
+    output: ProcessingOutput
+    parameters: ProcessingParametersTrain3d
