@@ -1,4 +1,5 @@
 import numpy as np
+from tqdm import tqdm
 import os
 import torch
 import torch.nn as nn
@@ -73,8 +74,10 @@ class Trainer3d:
         """
         if fn_model is not None:
             self.model = load_model_3d(fn_model)
+            self.pretrained = True
         else:
             self.model = generate_model_3d(seed)
+            self.pretrained = False
         
     def set_optimizer(
         self,
@@ -129,9 +132,9 @@ class Trainer3d:
             dataset_valid, batch_size=self.batch_size, shuffle=False, num_workers=0,
         )
 
-    def set_denoising_volumes(self, denoise_epoch: int=0):
+    def set_denoising_volumes(self, n_denoise: int=0):
         """ Select volumes to optionally denoise each epoch. """
-        if denoise_epoch == 0:
+        if n_denoise == 0:
             self.repr_volumes = np.empty(0)
         else:
             filenames = np.concatenate((
@@ -139,7 +142,7 @@ class Trainer3d:
                 self.dataloader_valid.dataset.filenames2,
             ))
             filenames = np.random.choice(
-                filenames, denoise_epoch, replace=False,
+                filenames, n_denoise, replace=False,
             )
             filenames = [fn.replace('ODD_', '') for fn in filenames]
             if all([os.path.exists(fn) for fn in filenames]):
@@ -149,6 +152,16 @@ class Trainer3d:
                 print("Warning! Full volumes not at expected path")
                 self.repr_volumes = np.empty(0)
 
+    def denoise_repr_volumes(self, epoch: int, dlength: int, dpadding: int):
+        """ Denoise representative volumes for visual inspection. """
+        for vol_path in tqdm(self.repr_volumes, desc="Denoising representative tomograms"):
+            volume = dataio.load_mrc(vol_path).copy()
+            volume = inference.denoise_volume(volume, self.model, dlength, dpadding)
+            basename = f"{os.path.splitext(os.path.basename(vol_path))[0]}_epoch{epoch}.mrc"
+            dataio.save_mrc(
+                volume, os.path.join(self.out_path, basename), self.apix,
+            )
+                
     def evaluate(self, epoch):
         """ Evaluate model on validation data. """
 
@@ -196,7 +209,7 @@ class Trainer3d:
 
         return tr_loss.avg, tr_std.avg
             
-    def train(self, n_epochs: int=20, save_epoch: bool=True, denoise_epoch: int=0, dlength: int=128, dpadding: int=24):
+    def train(self, n_epochs: int=20, save_epoch: bool=True, n_denoise: int=0, dlength: int=128, dpadding: int=24):
         """ 
         Train model, evaluating on validation data after each epoch. 
         """
@@ -205,25 +218,25 @@ class Trainer3d:
             os.path.join(self.out_path, "training_stats.csv"),
             columns=['epoch', 'loss_train', 'loss_valid', 'std_dev'],
         )
-        self.set_denoising_volumes(denoise_epoch)
-        
+        self.set_denoising_volumes(n_denoise)
+
         for epoch in range(n_epochs):
+            if self.pretrained and epoch==0:
+                valid_loss = self.evaluate(epoch)
+                if len(self.repr_volumes) > 0:
+                    self.denoise_repr_volumes(epoch, dlength, dpadding)
+                logger.add_entry([epoch, 0, np.around(valid_loss,4), 0], write=True)
+            
             print('EPOCH {}:'.format(epoch+1))
             self.model.train(True)
             train_loss, std_dev = self.train_epoch(epoch+1)
             self.model.eval()
             valid_loss = self.evaluate(epoch+1)
 
-            logger.add_entry([epoch, np.around(train_loss,4), np.around(valid_loss,4), np.around(std_dev, 4)], write=True)
+            logger.add_entry([epoch+1, np.around(train_loss,4), np.around(valid_loss,4), np.around(std_dev, 4)], write=True)
             if save_epoch:
                 save_model(self.model, os.path.join(self.out_path, f"epoch{epoch+1}.pth"))
 
             if len(self.repr_volumes) > 0:
-                for vol_path in self.repr_volumes:
-                    volume = dataio.load_mrc(vol_path).copy()
-                    volume = inference.denoise_volume(volume, self.model, dlength, dpadding)
-                    basename = f"{os.path.splitext(os.path.basename(vol_path))[0]}_epoch{epoch+1}.mrc"
-                    dataio.save_mrc(
-                        volume, os.path.join(self.out_path, basename), self.apix,
-                    )
+                self.denoise_repr_volumes(epoch+1, dlength, dpadding)
                     
