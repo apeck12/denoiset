@@ -56,8 +56,8 @@ class Trainer3d:
             val_fraction, 
             pattern, 
             extension, 
-            length,
-            n_extract,
+            length=length,
+            n_extract=n_extract,
         )
         self.out_path = out_path
         
@@ -104,7 +104,7 @@ class Trainer3d:
         pattern: str, 
         extension: str, 
         length: int=96,
-        n_extract: int=100,
+        n_extract: int=200,
     ) -> None:
         """
         Generate Dataloaders for training and validation sets.
