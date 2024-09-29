@@ -99,6 +99,7 @@ def get_split_filenames(
     extension: str="_ODD_Vol.mrc",
     exclude_tags: list=[], 
     rng: np.random._generator.Generator=None,
+    length: int=None,
 ) -> dict:
     """
     Retrieve available file pairs and split into train and validation. 
@@ -115,6 +116,7 @@ def get_split_filenames(
     extension: extension to add to each listed file
     exclude_tags: list of tags to exclude
     rng: random generator object if seed is fixed
+    length: subvolume length for excluding too small tomograms
     
     Returns
     -------
@@ -133,6 +135,9 @@ def get_split_filenames(
             filenames1 = [f"{fn}{extension}" for fn in filenames1]
     else:
         raise ValueError("in_path argument not recognized")
+
+    if length is not None:
+        filenames1 = exclude_thin_volumes(filenames1, length)
         
     if len(filenames1) == 0:
         raise IOError("No input ODD files found")
@@ -156,3 +161,30 @@ def get_split_filenames(
     file_split['valid2'] = list(np.take(filenames2, rand_idx))
 
     return file_split
+
+
+def exclude_thin_volumes(
+    filenames: list, 
+    length: int,
+) -> list:
+    """
+    Exclude any volumes whose dimensions are insufficient for 
+    the specified subvolume extraction size.
+    
+    Parameters
+    ----------
+    filenames: list of tomogram filepaths
+    length: subvolume extraction size
+    
+    Returns
+    -------
+    filenames: potentially reduced list of tomogram filepaths
+    """
+    exclude_indices = []
+    for i,fn in enumerate(filenames):
+        dim = mrcfile.mmap(fn, mode='r+').data.shape
+        if np.any(np.array(dim) < length):
+            exclude_indices.append(i)
+            print(f"Excluding {fn} due to volume's dimensions {dim}")
+    
+    return list(np.delete(np.array(filenames), exclude_indices))

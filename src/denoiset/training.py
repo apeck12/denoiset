@@ -26,7 +26,7 @@ class Trainer3d:
         pattern: str="*ODD_Vol.mrc",
         extension: str="_ODD_Vol.mrc",
         length: int=96,
-        n_extract: int=100,
+        n_extract: int=200,
     ) -> None:
         """
         Set up class for Noise2Noise training on tomography data. 
@@ -45,7 +45,6 @@ class Trainer3d:
         extension: suffix for ODD tomograms
         length: side length for subvolume extraction
         n_extract: number of subvolumes to extract per tomogram
-        denoise_each_epoch: list or number of volumes to denoise per epoch
         """
         self.rng = np.random.default_rng(seed)
         self.set_model(fn_model, seed)
@@ -117,6 +116,7 @@ class Trainer3d:
             extension=extension,
             exclude_tags=[],
             rng=self.rng,
+            length=length,
         )
 
         dataset_train = dataset.PairedTomograms(
