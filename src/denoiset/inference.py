@@ -208,6 +208,10 @@ class Denoiser3d:
         t_interval: seconds to wait before checking for new files
         t_exit: seconds to wait after last finding new files before exiting
         """
+        preprocessed = dataio.expand_filelist(self.out_dir, "*Vol.mrc", ["ODD","EVN"])
+        self.processed = [os.path.join(in_dir, os.path.basename(fn)) for fn in preprocessed]
+        print(f"Detected {len(self.processed)} tomograms already denoised")
+
         start_time = time.time()
         while True:
             if filenames is None:
