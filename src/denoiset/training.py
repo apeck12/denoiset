@@ -161,6 +161,7 @@ class Trainer3d:
             dataio.save_mrc(
                 volume, os.path.join(self.out_path, basename), self.apix,
             )
+            del volume
                 
     def evaluate(self, epoch):
         """ Evaluate model on validation data. """
