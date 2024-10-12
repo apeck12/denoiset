@@ -197,6 +197,7 @@ class PairedTomograms(PairedData):
                         volume1,
                         volume2,
                     )
+                    del volume1, volume2
                     if self.pairs1 is None:
                         self.pairs1 = subvolumes1
                         self.pairs2 = subvolumes2

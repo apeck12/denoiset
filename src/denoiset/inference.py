@@ -113,6 +113,9 @@ def denoise_volume(
         model = model.cuda()
     
     ibounds, rbounds, sbounds = get_bounds_3d(volume.shape, length, padding)
+    while np.min(ibounds[:,1::2] - ibounds[:,::2]) < 32:
+        padding += 2
+        ibounds, rbounds, sbounds = get_bounds_3d(volume.shape, length, padding)
     volume = torch.from_numpy(volume)
     volume = volume.cuda()
     volume_d = torch.zeros_like(volume)
@@ -172,7 +175,8 @@ class Denoiser3d:
         for i,fn in enumerate(fnames):
             if self.apix == None:
                 self.apix = dataio.get_voxel_size(fn)
-            
+
+            print(f"Denoising volume {os.path.basename(fn)}")
             volume = dataio.load_mrc(fn).copy()
             volume = denoise_volume(
                 volume, self.model, self.length, self.padding,
@@ -204,6 +208,10 @@ class Denoiser3d:
         t_interval: seconds to wait before checking for new files
         t_exit: seconds to wait after last finding new files before exiting
         """
+        preprocessed = dataio.expand_filelist(self.out_dir, "*Vol.mrc", ["ODD","EVN"])
+        self.processed = [os.path.join(in_dir, os.path.basename(fn)) for fn in preprocessed]
+        print(f"Detected {len(self.processed)} tomograms already denoised")
+
         start_time = time.time()
         while True:
             if filenames is None:

@@ -28,6 +28,13 @@ def parse_args():
         help="Pre-trained UNet3d model file",
     )
     parser.add_argument(
+        "--n_extract",
+        type=int,
+        required=False,
+        default=100,
+        help="Number of subvolumes to extract per tomogram",
+    )
+    parser.add_argument(
         "--seed",
         type=int,
         required=False,
@@ -167,6 +174,7 @@ def main():
         pattern=config.pattern,
         extension=config.extension,
         length=config.length,
+        n_extract=config.n_extract,
     )
     n2n.train(
         n_epochs=config.n_epochs, 
