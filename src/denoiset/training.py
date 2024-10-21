@@ -152,18 +152,24 @@ class Trainer3d:
                 print("Warning! Full volumes not at expected path")
                 self.repr_volumes = np.empty(0)
 
-    def denoise_repr_volumes(self, epoch: int, dlength: int, dpadding: int):
+    def denoise_repr_volumes(self, epoch: int, dlength: int, dpadding: int) -> tuple[float,float]:
         """ Denoise representative volumes for visual inspection. """
+        tr_cmean, tr_cmax = tracker.AverageMeter(), tracker.AverageMeter()
         for vol_path in tqdm(self.repr_volumes, desc="Denoising representative tomograms"):
             volume = dataio.load_mrc(vol_path).copy()
-            volume = inference.denoise_volume(volume, self.model, dlength, dpadding)
+            volume, cmetrics = inference.denoise_volume(volume, self.model, dlength, dpadding, metrics=True)
             basename = f"{os.path.splitext(os.path.basename(vol_path))[0]}_epoch{epoch}.mrc"
             dataio.save_mrc(
                 volume, os.path.join(self.out_path, basename), self.apix,
             )
+            
             del volume
+            tr_cmean.update(cmetrics[0])
+            tr_cmax.update(cmetrics[1])
+
+        return tr_cmean.avg, tr_cmax.avg
                 
-    def evaluate(self, epoch):
+    def evaluate(self, epoch) -> float:
         """ Evaluate model on validation data. """
 
         tr_loss = tracker.AverageMeter()
@@ -217,7 +223,7 @@ class Trainer3d:
         os.makedirs(self.out_path, exist_ok=True)
         logger = tracker.Logger(
             os.path.join(self.out_path, "training_stats.csv"),
-            columns=['epoch', 'loss_train', 'loss_valid', 'std_dev'],
+            columns=['epoch', 'loss_train', 'loss_valid', 'std_dev', 'ch_mean', 'ch_max'],
         )
         self.set_denoising_volumes(n_denoise)
 
@@ -234,10 +240,13 @@ class Trainer3d:
             self.model.eval()
             valid_loss = self.evaluate(epoch+1)
 
-            logger.add_entry([epoch+1, np.around(train_loss,4), np.around(valid_loss,4), np.around(std_dev, 4)], write=True)
             if save_epoch:
                 save_model(self.model, os.path.join(self.out_path, f"epoch{epoch+1}.pth"))
 
             if len(self.repr_volumes) > 0:
-                self.denoise_repr_volumes(epoch+1, dlength, dpadding)
-                    
+                ch_mean, ch_max = self.denoise_repr_volumes(epoch+1, dlength, dpadding)
+            else:
+                ch_mean, ch_max = 0, 0
+
+            metrics = [np.around(m,4) for m in [train_loss, valid_loss, std_dev, ch_mean, ch_max]]
+            logger.add_entry([epoch+1] + metrics, write=True)
