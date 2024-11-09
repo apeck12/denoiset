@@ -120,10 +120,10 @@ class Trainer3d:
         )
 
         dataset_train = dataset.PairedTomograms(
-            file_split['train1'], file_split['train2'], length, n_extract,
+            file_split['train1'], file_split['train2'], length, n_extract, rng=self.rng,
         )
         dataset_valid = dataset.PairedTomograms(
-            file_split['valid1'], file_split['valid2'], length, n_extract,
+            file_split['valid1'], file_split['valid2'], length, n_extract, rng=self.rng,
         )
         self.dataloader_train = DataLoader(
             dataset_train, batch_size=self.batch_size, shuffle=False, num_workers=0,
@@ -139,7 +139,7 @@ class Trainer3d:
         else:
             filenames = np.concatenate((
                 self.dataloader_train.dataset.filenames1,
-                self.dataloader_valid.dataset.filenames2,
+                self.dataloader_valid.dataset.filenames1,
             ))
             filenames = self.rng.choice(
                 filenames, n_denoise, replace=False,
@@ -155,17 +155,18 @@ class Trainer3d:
     def denoise_repr_volumes(self, epoch: int, dlength: int, dpadding: int) -> tuple[float,float]:
         """ Denoise representative volumes for visual inspection. """
         tr_cmean, tr_cmax = tracker.AverageMeter(), tracker.AverageMeter()
-        for vol_path in tqdm(self.repr_volumes, desc="Denoising representative tomograms"):
-            volume = dataio.load_mrc(vol_path).copy()
-            volume, cmetrics = inference.denoise_volume(volume, self.model, dlength, dpadding, metrics=True)
-            basename = f"{os.path.splitext(os.path.basename(vol_path))[0]}_epoch{epoch}.mrc"
-            dataio.save_mrc(
-                volume, os.path.join(self.out_path, basename), self.apix,
-            )
+        with torch.no_grad():
+            for vol_path in tqdm(self.repr_volumes, desc="Denoising representative tomograms"):
+                volume = dataio.load_mrc(vol_path).copy()
+                volume, cmetrics = inference.denoise_volume(volume, self.model, dlength, dpadding, metrics=True)
+                basename = f"{os.path.splitext(os.path.basename(vol_path))[0]}_epoch{epoch}.mrc"
+                dataio.save_mrc(
+                    volume, os.path.join(self.out_path, basename), self.apix,
+                )
             
-            del volume
-            tr_cmean.update(cmetrics[0])
-            tr_cmax.update(cmetrics[1])
+                del volume
+                tr_cmean.update(cmetrics[0])
+                tr_cmax.update(cmetrics[1])
 
         return tr_cmean.avg, tr_cmax.avg
                 
