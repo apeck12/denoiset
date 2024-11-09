@@ -126,7 +126,8 @@ class PairedTomograms(PairedData):
         """
         Determine the number of tomograms to store in memory.
         """
-        threshold = 5250000000 # approx number of voxels
+        #threshold = 5250000000 # approx number of voxels
+        threshold = 3250000000
         self.n_load = int(threshold / (self.n_extract * self.length**3))
         self.n_load = min(self.n_load, len(self.filenames1))
         
