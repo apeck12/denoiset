@@ -1,3 +1,4 @@
+import psutil
 from tqdm import tqdm
 import numpy as np
 from torch.utils.data import Dataset
@@ -127,7 +128,7 @@ class PairedTomograms(PairedData):
         Determine the number of tomograms to store in memory.
         """
         #threshold = 5250000000 # approx number of voxels
-        threshold = 3250000000
+        threshold = 2250000000
         self.n_load = int(threshold / (self.n_extract * self.length**3))
         self.n_load = min(self.n_load, len(self.filenames1))
         
@@ -194,6 +195,7 @@ class PairedTomograms(PairedData):
                 if index_fn + n < len(self.filenames1):
                     volume1 = dataio.load_mrc(self.filenames1[index_fn+n])
                     volume2 = dataio.load_mrc(self.filenames2[index_fn+n])
+                    print(f"Memory footprint: {psutil.virtual_memory().available * 100 / psutil.virtual_memory().total}")
                     subvolumes1, subvolumes2 = self.get_paired_subvolumes(
                         volume1,
                         volume2,
@@ -205,10 +207,16 @@ class PairedTomograms(PairedData):
                     else:
                         self.pairs1 = np.concatenate((self.pairs1, subvolumes1))
                         self.pairs2 = np.concatenate((self.pairs2, subvolumes2))
+                    del subvolumes1, subvolumes2
                         
             self.pairs1 = transform.normalize(self.pairs1, along_first_axis=True)
             self.pairs2 = transform.normalize(self.pairs2, along_first_axis=True)
             self.randomize_data_pairs()
+
+            if np.any(np.isinf(self.pairs1)) or np.any(np.isnan(self.pairs1)):
+                print(f"Encountered invalid value in subvolumes from {self.filenames1[index_fn+n]}")
+            if np.any(np.isinf(self.pairs2)) or np.any(np.isnan(self.pairs2)):
+                print(f"Encountered invalid value in subvolumes from {self.filenames2[index_fn+n]}")
             
         subvolume1, subvolume2 = transform.augment(self.pairs1[index_pair], self.pairs2[index_pair])
         return np.expand_dims(subvolume1, axis=0), np.expand_dims(subvolume2, axis=0)
