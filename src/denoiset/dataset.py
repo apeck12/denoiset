@@ -1,4 +1,3 @@
-import psutil
 from tqdm import tqdm
 import numpy as np
 from torch.utils.data import Dataset
@@ -128,7 +127,7 @@ class PairedTomograms(PairedData):
         Determine the number of tomograms to store in memory.
         """
         #threshold = 5250000000 # approx number of voxels
-        threshold = 2250000000
+        threshold = 4250000000
         self.n_load = int(threshold / (self.n_extract * self.length**3))
         self.n_load = min(self.n_load, len(self.filenames1))
         
@@ -195,7 +194,6 @@ class PairedTomograms(PairedData):
                 if index_fn + n < len(self.filenames1):
                     volume1 = dataio.load_mrc(self.filenames1[index_fn+n])
                     volume2 = dataio.load_mrc(self.filenames2[index_fn+n])
-                    print(f"Memory footprint: {psutil.virtual_memory().available * 100 / psutil.virtual_memory().total}")
                     subvolumes1, subvolumes2 = self.get_paired_subvolumes(
                         volume1,
                         volume2,
