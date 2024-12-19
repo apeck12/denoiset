@@ -8,6 +8,43 @@ from denoiset.model import UNet3d
 from denoiset.model import load_model_3d
 
 
+def get_checkerboard_metric(
+    volume: np.ndarray, 
+    rbounds: np.ndarray, 
+    margin: int=4,
+)->tuple[float,float]:
+    """
+    Estimate the magnitude of the checkerboard effect in the
+    XY plane of the denoised volume by calculating the delta
+    between adjacent planes of the tiled, denoised subvolumes
+    and nearby adjacent planes. The motivation for examining
+    the XY plane is to avoid missing wedge effects.
+    
+    Parameters
+    ----------
+    volume: denoised subvolume
+    rbounds: tiling bounds (rbounds from get_bounds_3d)
+    margin: margin in pixels for comparing nearby planes
+    
+    Returns
+    -------
+    (mean, max) of fractional delta increase between adjacent
+       planes, where delta is computed as the mean difference
+       between neighboring pixels of adjacent planes
+    """
+    mbounds = rbounds[np.where((rbounds[:,0]!=0) & (rbounds[:,2]!=0) & (rbounds[:,4]!=0))[0]]
+    metric = np.zeros(mbounds.shape[0])
+    for i in range(mbounds.shape[0]):
+        subvolume = volume[mbounds[i][0]-margin:mbounds[i][1],
+                           mbounds[i][2]-margin:mbounds[i][3],
+                           mbounds[i][4]-margin:mbounds[i][5]]
+        deltas = np.array([np.sum(np.abs(subvolume[k,:,:].flatten() - subvolume[k+1,:,:].flatten())) for k in range(margin*2-1)])
+        baseline = np.mean(deltas[~np.isin(np.arange(len(deltas)), margin-1)])
+        metric[i] = np.abs(baseline - deltas[margin-1])/np.mean(baseline)
+            
+    return np.mean(metric), np.max(metric)
+
+
 def get_bounds_one_axis(dim: int, length:int, padding:int) -> list:
     """
     Determine the boundaries to achieve the desired crop
@@ -91,8 +128,9 @@ def denoise_volume(
     volume: np.ndarray, 
     model: UNet3d, 
     length: int, 
-    padding: int, 
-) -> np.ndarray:
+    padding: int,
+    metrics: bool=False,
+) -> np.ndarray | tuple:
     """
     Denoise one volume by applying a pre-trained model
     to overlapping patches. Variant in which the full
@@ -104,6 +142,7 @@ def denoise_volume(
     model: pretrained model
     length: subvolume side length before padding
     padding: number of pixels for padding/overlap
+    metrics: compute checkerboard metrics (mean, max)
     
     Returns
     -------
@@ -128,10 +167,16 @@ def denoise_volume(
         with torch.no_grad():
             volume_i = model(volume_i).squeeze()
         volume_i = volume_i[sbounds[i][0]:sbounds[i][1],sbounds[i][2]:sbounds[i][3],sbounds[i][4]:sbounds[i][5]]
-        volume_d[rbounds[i][0]:rbounds[i][1],rbounds[i][2]:rbounds[i][3],rbounds[i][4]:rbounds[i][5]] = volume_i
-        
+        volume_d[rbounds[i][0]:rbounds[i][1],rbounds[i][2]:rbounds[i][3],rbounds[i][4]:rbounds[i][5]] = volume_i        
+
     volume_d = sigma * volume_d + mu
-    return volume_d.cpu().numpy()
+    volume_d = volume_d.cpu().numpy()
+    
+    if metrics:
+        cmean, cmax = get_checkerboard_metric(volume_d, rbounds)
+        return volume_d, (cmean, cmax)
+        
+    return volume_d
 
 
 class Denoiser3d:

@@ -60,10 +60,27 @@ def get_voxel_size(
     -------
     apix: float, pixel size in Angstrom
     """
-    apix = mrcfile.open(filename).voxel_size.tolist()
+    apix = mrcfile.mmap(filename).voxel_size.tolist()
     if isotropic:
         return apix[0]
     return apix
+
+
+def get_volume_shape(
+    filename: str,
+) -> tuple:
+    """
+    Retrieve volume's dimensions.
+
+    Parameters
+    ----------
+    filename: str, path to mrc file
+
+    Returns
+    -------
+    tomogram shape along (Z,Y,X) axes
+    """
+    return mrcfile.mmap(filename).data.shape
 
 
 def expand_filelist(
