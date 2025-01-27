@@ -169,6 +169,19 @@ class Trainer3d:
                 tr_cmax.update(cmetrics[1])
 
         return tr_cmean.avg, tr_cmax.avg
+
+    def get_optimal_epoch(self, ch_threshold: float=0.034) -> int:
+        """ 
+        Find the epoch before the mean checkerboard artifact metric
+        exceeds the specified value. If no epoch exceeds this value
+        choose the epoch with the highest standard deviation metric.
+        """
+        index = np.where(self.logger.data.ch_mean.values > ch_threshold)[0]
+        if len(index) > 0:
+            index = index[0] - 1
+        else:
+            index = np.argmax(self.logger.data.std_dev)
+        return self.logger.data.epoch.iloc[index]
                 
     def evaluate(self, epoch) -> float:
         """ Evaluate model on validation data. """
@@ -217,12 +230,12 @@ class Trainer3d:
 
         return tr_loss.avg, tr_std.avg
             
-    def train(self, n_epochs: int=20, save_epoch: bool=True, n_denoise: int=0, dlength: int=128, dpadding: int=24):
+    def train(self, n_epochs: int=20, n_denoise: int=0, dlength: int=128, dpadding: int=24, ch_threshold: float=0.034, train_all_epochs: bool=False):
         """ 
         Train model, evaluating on validation data after each epoch. 
         """
         os.makedirs(self.out_path, exist_ok=True)
-        logger = tracker.Logger(
+        self.logger = tracker.Logger(
             os.path.join(self.out_path, "training_stats.csv"),
             columns=['epoch', 'loss_train', 'loss_valid', 'std_dev', 'ch_mean', 'ch_max'],
         )
@@ -233,7 +246,7 @@ class Trainer3d:
                 valid_loss = self.evaluate(epoch)
                 if len(self.repr_volumes) > 0:
                     self.denoise_repr_volumes(epoch, dlength, dpadding)
-                logger.add_entry([epoch, 0, np.around(valid_loss,4), 0], write=True)
+                self.logger.add_entry([epoch, 0, np.around(valid_loss,4), 0], write=True)
             
             print('EPOCH {}:'.format(epoch+1))
             self.model.train(True)
@@ -241,13 +254,16 @@ class Trainer3d:
             self.model.eval()
             valid_loss = self.evaluate(epoch+1)
 
-            if save_epoch:
-                save_model(self.model, os.path.join(self.out_path, f"epoch{epoch+1}.pth"))
-
+            save_model(self.model, os.path.join(self.out_path, f"epoch{epoch+1}.pth"))
+            ch_mean, ch_max = 0, 0
             if len(self.repr_volumes) > 0:
                 ch_mean, ch_max = self.denoise_repr_volumes(epoch+1, dlength, dpadding)
-            else:
-                ch_mean, ch_max = 0, 0
 
             metrics = [np.around(m,4) for m in [train_loss, valid_loss, std_dev, ch_mean, ch_max]]
-            logger.add_entry([epoch+1] + metrics, write=True)
+            self.logger.add_entry([epoch+1] + metrics, write=True)
+
+            opt_epoch = self.get_optimal_epoch(ch_threshold)
+            self.opt_model = os.path.join(self.out_path, f"epoch{opt_epoch}.pth")
+            print(f"Best epoch so far: {opt_epoch}")
+            if (ch_mean > ch_threshold) and not train_all_epochs:
+                break

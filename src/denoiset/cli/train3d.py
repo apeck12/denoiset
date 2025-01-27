@@ -4,7 +4,7 @@ from argparse import ArgumentParser
 import denoiset.training as training
 import denoiset.curation as curation
 from denoiset.settings import ProcessingConfigTrain3d
-from denoiset.settings import AttrDict
+from denoiset.args import AttrDict
 
 
 def parse_args():
