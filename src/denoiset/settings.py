@@ -2,22 +2,22 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 
-class ProcessingSoftware(BaseModel):
+class SettingsSoftware(BaseModel):
     name: str
     version: str
 
 
-class ProcessingOutput(BaseModel):
+class SettingsOutput(BaseModel):
     out_dir: str
     
     
-class ProcessingInputPredict3d(BaseModel):
+class SettingsInputPredict3d(BaseModel):
     model: str
     in_dir: str
     filenames: Optional[str]
 
     
-class ProcessingParametersPredict3d(BaseModel):
+class SettingsParametersPredict3d(BaseModel):
     pattern: str
     exclude_tags: List[str]
     length: int
@@ -27,20 +27,20 @@ class ProcessingParametersPredict3d(BaseModel):
     t_exit: float
 
 
-class ProcessingConfigPredict3d(BaseModel):
-    software: ProcessingSoftware
-    input: ProcessingInputPredict3d
-    output: ProcessingOutput
-    parameters: ProcessingParametersPredict3d
+class SettingsConfigPredict3d(BaseModel):
+    software: SettingsSoftware
+    input: SettingsInputPredict3d
+    output: SettingsOutput
+    parameters: SettingsParametersPredict3d
 
 
-class ProcessingInputTrain3d(BaseModel):
+class SettingsInputTrain3d(BaseModel):
     in_path: str
     model: Optional[str]
     vol_path: Optional[str]
     
 
-class ProcessingParametersTrain3d(BaseModel):
+class SettingsParametersTrain3d(BaseModel):
     seed: Optional[int]
     optimizer: str
     learning_rate: float
@@ -66,13 +66,64 @@ class ProcessingParametersTrain3d(BaseModel):
     sort_by: str
 
 
-class ProcessingConfigTrain3d(BaseModel):
-    software: ProcessingSoftware
-    input: ProcessingInputTrain3d
-    output: ProcessingOutput
-    parameters: ProcessingParametersTrain3d
+class SettingsConfigTrain3d(BaseModel):
+    software: SettingsSoftware
+    input: SettingsInputTrain3d
+    output: SettingsOutput
+    parameters: SettingsParametersTrain3d
 
+    
+class SettingsInputDenoise3d(BaseModel):
+    input: str
+    metrics_file: Optional[str]
+    model: Optional[str]
 
+    
+class SettingsOutputDenoise3d(BaseModel):
+    output: str
+
+    
+class SettingsParametersDenoise3d(BaseModel):
+    pattern: str
+    odd_pattern: str
+    odd_extension: str
+    n_extract: int
+    length: int
+    seed: Optional[int]
+    optimizer: str
+    learning_rate: float
+    batch_size: int
+    val_fraction: float
+    n_epochs: int
+    n_denoise: int
+    train_only: bool
+    train_all_epochs: bool
+    ch_threshold: float
+    live: bool
+    t_interval: float
+    t_exit: float
+    tilt_axis: float
+    thickness: float
+    global_shift: float
+    bad_patch_low: float
+    bad_patch_all: float
+    ctf_res: float
+    ctf_score: float
+    min_selected: int
+    max_selected: int
+    sort_by: str
+    exclude_tags: list
+    inf_length: int
+    inf_padding: int
+
+    
+class SettingsConfigDenoise3d(BaseModel):
+    software: SettingsSoftware
+    input: SettingsInputDenoise3d
+    output: SettingsOutputDenoise3d
+    parameters: SettingsParametersDenoise3d
+    
+    
 class AttrDict(dict):
     """
     A class to convert a nested Dictionary into an object with key-values

@@ -3,7 +3,7 @@ import time
 from argparse import ArgumentParser
 import denoiset.training as training
 import denoiset.curation as curation
-from denoiset.settings import ProcessingConfigTrain3d
+from denoiset.settings import SettingsConfigTrain3d
 from denoiset.args import AttrDict
 
 
@@ -220,7 +220,7 @@ def store_parameters(config):
     param_keys = [key for key in config if key not in used_keys]
     reconfig["parameters"] = {k: config[k] for k in param_keys}
 
-    reconfig = ProcessingConfigTrain3d(**reconfig)
+    reconfig = SettingsConfigTrain3d(**reconfig)
     os.makedirs(config.out_dir, exist_ok=True)
     with open(os.path.join(config.out_dir, "train3d.json"), "w") as f:
         f.write(reconfig.model_dump_json(indent=4))

@@ -4,6 +4,31 @@ import denoiset.curation as curation
 import denoiset.training as training
 import denoiset.inference as inference
 from denoiset.args import DenoiseArgs, AttrDict
+from denoiset.settings import SettingsConfigDenoise3d
+
+
+def store_parameters(config):
+    """
+    Store command line arguments in a json file.
+    """
+    d_config = vars(config)
+
+    reconfig = {}
+    reconfig["software"] = {"name": "denoiset", "version": "0.1.0"}
+    reconfig["input"] = {k: d_config[k] for k in ["input", "metrics_file", "model"]}
+    reconfig["output"] = {k: d_config[k] for k in ["output"]}
+
+    used_keys = [list(reconfig[key].keys()) for key in reconfig]
+    used_keys = [p for param in used_keys for p in param]
+    param_keys = [key for key in d_config if key not in used_keys]
+    reconfig["parameters"] = {k: d_config[k] for k in param_keys}
+
+    reconfig = SettingsConfigDenoise3d(**reconfig)
+
+    os.makedirs(config.output, exist_ok=True)
+    with open(os.path.join(config.output, "denoise3d.json"), "w") as f:
+        f.write(reconfig.model_dump_json(indent=4))
+
 
 def main():
 
@@ -11,7 +36,8 @@ def main():
     config = args.parse_args()
     config = AttrDict(vars(config))
     os.makedirs(config.output, exist_ok=True)
-
+    store_parameters(config)
+    
     if not config.train_only:
         train_out = os.path.join(config.output, "training")
         os.makedirs(train_out, exist_ok=True)
@@ -24,7 +50,7 @@ def main():
     # optionally curate based on tilt-series metrics
     if config.metrics_file:
 
-        curation.monitor_for_metrics(config.metrics_file)
+        curation.monitor_for_metrics(config.metrics_file, config.t_interval, config.t_exit)
         curator = curation.TomogramCurator(config.metrics_file)
         metrics = ['tilt_axis', 'thickness', 'global_shift',
                    'bad_patch_low', 'bad_patch_all', 'ctf_res', 'ctf_score']        
@@ -41,9 +67,7 @@ def main():
             t_interval=config.t_interval,
             t_exit=config.t_exit,
         )
-        time.sleep(config.t_interval)
         train_in = train_list
-        #config.__setitem__("input", train_list) # this needs fixing
     else:
         train_in = config.input
 
@@ -84,5 +108,6 @@ def main():
             t_exit=config.t_exit,
         )
 
+        
 if __name__ == "__main__":
     main()
