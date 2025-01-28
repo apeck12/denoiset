@@ -53,6 +53,7 @@ dev = [
 [project.scripts]
 predict3d = "denoiset.cli.predict3d:main"
 train3d = "denoiset.cli.train3d:main"
+denoise3d = "denoiset.cli.denoise3d:main"
 
 #[tool.hatch.version]
 #source = "denoiset/__init__.py"
