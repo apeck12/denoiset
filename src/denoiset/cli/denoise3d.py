@@ -23,6 +23,8 @@ def main():
 
     # optionally curate based on tilt-series metrics
     if config.metrics_file:
+
+        curation.monitor_for_metrics(config.metrics_file)
         curator = curation.TomogramCurator(config.metrics_file)
         metrics = ['tilt_axis', 'thickness', 'global_shift',
                    'bad_patch_low', 'bad_patch_all', 'ctf_res', 'ctf_score']        
