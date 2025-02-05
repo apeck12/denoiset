@@ -5,7 +5,11 @@ DenoisET implements the Noise2Noise algorithm [1] for cryoET data. While this ma
 
 
 ## Pre-trained models
-We provide several 
+The following pre-trained models that were trained on data collected at CZII can be found in the models directory:
+- cilia.pth: data from mouse olfactory neuronal cilia
+- lysosome.pth: data are from affinity-purified endo/lysosomes
+- minicell.pth: data are available on the cryoET Data Portal under deposition ID CZCDP-10312
+- synaptosome.pth: data are available on the cryoET Data Portal under deposition ID CZCDP-10313
 
 ## References
 [1] Lehtinen, J. et al. (2018) Noise2Noise: Learning Image Restoration without Clean Data. arXiv: 1803.04189.
