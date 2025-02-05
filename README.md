@@ -1,2 +1,14 @@
 # denoiset
-An implementation of Noise2Noise for cryoET data
+DenoisET implements the Noise2Noise algorithm [1] for cryoET data. While this machine learning algorithm has previously been implemented in software such as Cryo-CARE [2] and Topaz-Denoise [3], DenoisET is designed to streamline integration with AreTomo3 and provide a more automated approach that algorithmically decides which tomograms to select for training data and when to transition from training to inference. DenoisET can be run during live data collection, either by applying a previously-trained model for inference or training a new 3D denoising model from scratch. We recommend using the CTF-deconvolved tomograms reconstructed by AreTomo3 for both training and inference. More details are available in Ref. [4].
+
+## Instructions for use
+
+
+## Pre-trained models
+We provide several 
+
+## References
+[1] Lehtinen, J. et al. (2018) Noise2Noise: Learning Image Restoration without Clean Data. arXiv: 1803.04189.
+[2] Buccholz, T., Jordan, M., Pigino, G. and Jug, F. (2018) Cryo-CARE: Content-Aware Image Restoration for Cryo-Transmission Electron Microscopy Data. arXiv:1810.05420.
+[3] Bepler, T., Kelley, K., Noble, A. J, and Berger, B. (2020) Topaz-Denoise: general deep denoising models for cryoEM and cryoET. Nature Communications: 11, 5208.
+[4] Peck, A. et al.
