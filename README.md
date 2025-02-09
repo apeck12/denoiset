@@ -4,7 +4,7 @@ DenoisET implements the Noise2Noise algorithm [1] for cryoET data. While this ma
 ## Installation
 
 The following will clone DenoisET from Github and install it in a new conda environment.
-```console
+```
 git clone https://github.com/apeck12/denoiset.git
 cd denoiset
 
@@ -16,7 +16,20 @@ pip install .
 
 ## Instructions for use
 
+The following command runs both training and inference, with training tomograms selected based on their quality metrics and the transition to inference automatically determined based on the appearance of checkerboard artifacts in the denoised tomograms:
+```
+denoise3d --input [tomogram directory] --output [output directory] --metrics_file [path to TiltSeries_Metrics.csv] 
+```
+To run this concurrently with AreTomo3 processing, the `--live` flag can be supplied. The `--t_interval` and `--t_exit` flags determine how frequently DenoisET checks for new tomograms and how long it waits to exit after finding no new tomograms. The default values for these are 5 and 30 minutes, respectively, but the parameters should be given in seconds.
 
+The following flags can be used to adjust the default thresholds for the quality metrics:
+* `--tilt_axis`, maximum deviation from the median value in degrees (default: 1.5)
+* `--thickness`, minimal sample thickness in Angstrom (default: 1000)
+* `--global_shift`, maximum global shift in Angstrom (default: 750)
+* `--bad_patch_low`, maximum fraction of bad patches at low tilt angles (default: 0.05)
+* `--bad_patch_all`, maximum fraction of bad patches across the tilt range (default: 0.1)
+* `--ctf_res`, maximum resolution of the CTF score in Angstrom (default: 20)
+* `--ctf_score`, minimum CTF score (default: 0.05)
 
 ## Pre-trained models
 The following pre-trained models that were trained on data collected at CZII can be found in the models directory:
