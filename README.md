@@ -4,7 +4,7 @@ DenoisET implements the Noise2Noise algorithm [1] for cryoET data. While this ma
 ## Installation
 
 The following will clone DenoisET from Github and install it in a new conda environment.
-```
+```console
 git clone https://github.com/apeck12/denoiset.git
 cd denoiset
 
