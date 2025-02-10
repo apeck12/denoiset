@@ -20,6 +20,10 @@ The following command runs both training and inference, with training tomograms 
 ```
 denoise3d --input [tomogram directory] --output [output directory] --metrics_file [path to TiltSeries_Metrics.csv] 
 ```
+By default, the file nomenclature is expected to follow AreTomo3's conventions, with paired half tomograms ending in ODD_Vol.mrc and EVN_Vol.mrc. Only tomograms without EVN or ODD in their filenames will be denoised during inference. All tomograms (even, odd and full) are expected to be in the same input directory. A `training` subdirectory will be created in the output directory and populated with the list of training tomograms, the per-epoch model files(epoch[n].pth), per-epoch statistics (training_stats.csv), and representative denoised tomograms during each training epoch.
+
+To adjust the volume of training data, the `--n_extract` (default: 250) and `--max_selected` (default: 30) parameters respectively determine the number of subvolumes extracted per tomogram per training epoch and the maximum number of tomograms to use during training. The default minimum number of tomograms (`--min_selected`) is 10. The default number of training epochs is 20, but training will automatically be terminated and inference started once the threshold set by `--ch_threshold` (default 0.034) is reached. 
+
 To run this concurrently with AreTomo3 processing, the `--live` flag can be supplied. The `--t_interval` and `--t_exit` flags determine how frequently DenoisET checks for new tomograms and how long it waits to exit after finding no new tomograms. The default values for these are 5 and 30 minutes, respectively, but the parameters should be given in seconds.
 
 The following flags can be used to adjust the default thresholds for the quality metrics:
@@ -30,6 +34,8 @@ The following flags can be used to adjust the default thresholds for the quality
 * `--bad_patch_all`, maximum fraction of bad patches across the tilt range (default: 0.1)
 * `--ctf_res`, maximum resolution of the CTF score in Angstrom (default: 20)
 * `--ctf_score`, minimum CTF score (default: 0.05)
+
+Running `denoise3d --help` will list dditional parameters that can be adjusted from the command line.
 
 ## Pre-trained models
 The following pre-trained models that were trained on data collected at CZII can be found in the models directory:
