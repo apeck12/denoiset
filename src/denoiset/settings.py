@@ -122,6 +122,34 @@ class SettingsConfigDenoise3d(BaseModel):
     input: SettingsInputDenoise3d
     output: SettingsOutputDenoise3d
     parameters: SettingsParametersDenoise3d
+
+
+class SettingsInputCurate(BaseModel):
+    metrics_file: str
+
+    
+class SettingsOutputCurate(BaseModel):
+    output: str
+
+
+class SettingsParametersCurate(BaseModel):
+    tilt_axis: float
+    thickness: float
+    global_shift: float
+    bad_patch_low: float
+    bad_patch_all: float
+    ctf_res: float
+    ctf_score: float
+    min_selected: int
+    max_selected: int
+    sort_by: str    
+    
+
+class SettingsConfigCurate(BaseModel):
+    software: SettingsSoftware
+    input: SettingsInputCurate
+    output: SettingsOutputCurate
+    parameters: SettingsParametersCurate
     
     
 class AttrDict(dict):

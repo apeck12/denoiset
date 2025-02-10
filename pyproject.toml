@@ -54,6 +54,7 @@ dev = [
 predict3d = "denoiset.cli.predict3d:main"
 train3d = "denoiset.cli.train3d:main"
 denoise3d = "denoiset.cli.denoise3d:main"
+curate = "denoiset.cli.curate:main"
 
 #[tool.hatch.version]
 #source = "denoiset/__init__.py"

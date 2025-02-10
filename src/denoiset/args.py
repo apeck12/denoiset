@@ -25,7 +25,7 @@ class BaseArgs:
             "--max_selected",
             required=False,
             type=int,
-            default=50,
+            default=30,
             help="Maximum number of selected tomograms if in_path is a metrics file",
         )
         self.parser.add_argument(
@@ -274,6 +274,18 @@ class DenoiseArgs(BaseArgs):
         self.add_live_args()
 
 
+class CurateArgs(BaseArgs):
+    def __init__(self):
+        super().__init__()
+        self.add_curation_args()
+        self.parser.add_argument(
+            "--output", 
+            type=str,
+            required=True,
+            help="Output CSV file of the selected tilt-series", 
+        )
+
+        
 class AttrDict(dict):
     """
     A class to convert a nested Dictionary into an object with key-values
