@@ -72,6 +72,32 @@ class SettingsConfigTrain3d(BaseModel):
     output: SettingsOutput
     parameters: SettingsParametersTrain3d
 
+
+class SettingsInputPredict3d(BaseModel):
+    input: str
+    model: Optional[str]
+
+    
+class SettingsOutputPredict3d(BaseModel):
+    output: str
+    
+
+class SettingsParametersPredict3d(BaseModel):
+    pattern: str
+    live: bool
+    exclude_tags: list
+    inf_length: int
+    inf_padding: int
+    t_interval: float
+    t_exit: float
+
+
+class SettingsConfigPredict3d(BaseModel):
+    software: SettingsSoftware
+    input: SettingsInputPredict3d
+    output: SettingsOutputPredict3d
+    parameters: SettingsParametersPredict3d
+
     
 class SettingsInputDenoise3d(BaseModel):
     input: str
