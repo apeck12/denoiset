@@ -222,3 +222,23 @@ class TomogramCurator:
                 if len(self.indices) < 1:
                     raise ValueError("No high-quality tomograms were found")
                 break
+
+
+def monitor_for_metrics(in_file: str, t_interval: float, t_exit: float)->None:
+    """
+    Release from holding pattern once a metrics file has been written.
+
+    Parameters
+    ----------
+    in_file: an AreTomo3 TiltSeries_Metrics.csv file
+    t_interval: interval between checking for new tomograms in seconds 
+    t_exit: interval after which to exit in seconds if no new tomograms are found
+    """
+    start_time = time.time()
+    while True:
+        if os.path.exists(in_file):
+            break
+        time.sleep(t_interval)
+        t_elapsed = time.time() - start_time
+        if t_elapsed > t_exit:
+            break

@@ -1,7 +1,7 @@
 import os
 from argparse import ArgumentParser
 import denoiset.inference as inference
-from denoiset.settings import ProcessingConfigPredict3d
+from denoiset.settings import SettingsConfigPredict3d
 
 
 def parse_args():
@@ -102,7 +102,7 @@ def store_parameters(config):
     param_keys = [key for key in d_config if key not in used_keys]
     reconfig["parameters"] = {k: d_config[k] for k in param_keys}
 
-    reconfig = ProcessingConfigPredict3d(**reconfig)
+    reconfig = SettingsConfigPredict3d(**reconfig)
 
     os.makedirs(config.out_dir, exist_ok=True)
     with open(os.path.join(config.out_dir, "predict3d.json"), "w") as f:
