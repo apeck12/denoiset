@@ -38,14 +38,15 @@ The following flags can be used to adjust the default thresholds for the quality
 Running `denoise3d --help` will list additional parameters that can be adjusted from the command line.
 
 ## Pre-trained models
-The following pre-trained models that were trained on data collected at CZII can be found in the models directory:
+The following pre-trained models that were trained on data collected at CZII can be found in the models directory. With the exception of the cilia model, all models were trained on 5 Å CTF-deconvolved tomograms.
 - cilia.pth: data from mouse olfactory neuronal cilia
-- lysosome.pth: data are from affinity-purified endo/lysosomes
-- minicell.pth: data are available on the cryoET Data Portal under deposition ID [CZCDP-10312](https://cryoetdataportal.czscience.com/depositions/10312)
-- synaptosome.pth: data are available on the cryoET Data Portal under deposition ID [CZCDP-10313](https://cryoetdataportal.czscience.com/depositions/10313)
+- lysosome.pth: data are from affinity-purified lysosomes
+- minicell.pth: data are available on the CryoET Data Portal under deposition ID [CZCDP-10312](https://cryoetdataportal.czscience.com/depositions/10312)
+- synaptosome.pth: data are available on the CryoET Data Portal under deposition ID [CZCDP-10313](https://cryoetdataportal.czscience.com/depositions/10313)
+- phantom.pth: data are available on the CryoET Data Portal under deposition ID [CZCDP-10310](https://cryoetdataportal.czscience.com/depositions/10310)
 
 ## References
 [1] Lehtinen, J. et al. (2018) Noise2Noise: Learning Image Restoration without Clean Data. arXiv: 1803.04189.<br />
 [2] Buccholz, T., Jordan, M., Pigino, G. and Jug, F. (2018) Cryo-CARE: Content-Aware Image Restoration for Cryo-Transmission Electron Microscopy Data. arXiv:1810.05420.<br />
 [3] Bepler, T., Kelley, K., Noble, A. J, and Berger, B. (2020) Topaz-Denoise: general deep denoising models for cryoEM and cryoET. Nature Communications: 11, 5208.<br />
-[4] Peck, A. et al.<br />
+[4] Peck, A. et al. (2025) AreTomoLive: Automated reconstruction of comprehensively-corrected and denoised cryo-electron tomograms in real-time and at high throughput. (in preparation)<br />
