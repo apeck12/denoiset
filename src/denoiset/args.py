@@ -263,7 +263,15 @@ class BaseArgs:
     def parse_args(self):
         return self.parser.parse_args()
 
+    
+class PredictArgs(BaseArgs):
+    def __init__(self):
+        super().__init__()
+        self.add_io_args()
+        self.add_inference_args()
+        self.add_live_args()
 
+        
 class DenoiseArgs(BaseArgs):
     def __init__(self):
         super().__init__()
